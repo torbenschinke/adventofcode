@@ -2,7 +2,6 @@ package day1_test
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	"github.com/torbenschinke/adventofcode/2020/day1"
@@ -30,7 +29,7 @@ func TestFindBySum2(t *testing.T) {
 		{
 			name: "example",
 			args: args{
-				nums: MustParseNums(nums0),
+				nums: day1.MustParseNums(nums0),
 				sum:  2020,
 			},
 			wantA: 1721,
@@ -40,7 +39,7 @@ func TestFindBySum2(t *testing.T) {
 		{
 			name: "actual data",
 			args: args{
-				nums: MustParseNums(nums1),
+				nums: day1.MustParseNums(nums1),
 				sum:  2020,
 			},
 			wantA: 456,
@@ -64,39 +63,6 @@ func TestFindBySum2(t *testing.T) {
 	}
 }
 
-func MustParseNums(in string) []int {
-	r, err := ParseNums(in)
-	if err != nil {
-		panic(err)
-	}
-
-	return r
-}
-
-func ParseNums(in string) ([]int, error) {
-	tmp := make([]rune, 0, 4)
-
-	var nums []int
-
-	for _, r := range in {
-		if r == '\n' {
-			i, err := strconv.Atoi(string(tmp))
-			if err != nil {
-				return nums, fmt.Errorf("cannot parse integer in line: %w", err)
-			}
-
-			nums = append(nums, i)
-			tmp = tmp[:0]
-
-			continue
-		}
-
-		tmp = append(tmp, r)
-	}
-
-	return nums, nil
-}
-
 //nolint:scopelint
 func TestFindBySum3(t *testing.T) {
 	type args struct {
@@ -114,7 +80,7 @@ func TestFindBySum3(t *testing.T) {
 		{
 			name: "example",
 			args: args{
-				nums: MustParseNums(nums0),
+				nums: day1.MustParseNums(nums0),
 				sum:  2020,
 			},
 			wantA: 979,
@@ -124,7 +90,7 @@ func TestFindBySum3(t *testing.T) {
 		{
 			name: "actual puzzle data",
 			args: args{
-				nums: MustParseNums(nums1),
+				nums: day1.MustParseNums(nums1),
 				sum:  2020,
 			},
 			wantA: 764,
