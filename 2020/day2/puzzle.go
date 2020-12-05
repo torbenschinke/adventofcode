@@ -76,7 +76,7 @@ func CanValidate1(row Row) bool {
 	return count >= row.DirectiveA && count <= row.DirectiveB
 }
 
-// CanValidate2 returns if this rule validates the according Password where DirectiveA and DirectiveB
+// CanValidate2 returns if this rule validates the according Row.Password where Row.DirectiveA and Row.DirectiveB are
 // the indices where either of both must be the letter. This only works correctly if Row.Letter is ASCII.
 func CanValidate2(row Row) bool {
 	a := row.DirectiveA - 1
