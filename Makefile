@@ -1,6 +1,6 @@
 GOLANGCI_LINT_VERSION = v1.33.0
 GO = go
-TOOLSDIR = $(TMPDIR)/wdy-go-sfpc
+TOOLSDIR = $(TMPDIR)/tos-aoc
 GOLANGCI_LINT = ${TOOLSDIR}/golangci-lint
 
 all: test ## just executes test

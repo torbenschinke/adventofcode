@@ -62,8 +62,8 @@ func ParseRow(str string) (Row, error) {
 	return r, nil
 }
 
-// CanValidate1 returns  true if this rule validates the according Password where DirectiveA and DirectiveB represents
-// inclusive Min/Max occurrences. This only works correctly is Row.Letter is ASCII.
+// CanValidate1 returns true if this rule validates the according Row.Password where Row.DirectiveA and Row.DirectiveB
+// represents inclusive Min/Max occurrences. This only works correctly is Row.Letter is ASCII.
 func CanValidate1(row Row) bool {
 	count := 0
 
@@ -76,8 +76,8 @@ func CanValidate1(row Row) bool {
 	return count >= row.DirectiveA && count <= row.DirectiveB
 }
 
-// CanValidate2 returns if this rule validates the according Row.Password where Row.DirectiveA and Row.DirectiveB are
-// the indices where either of both must be the letter. This only works correctly if Row.Letter is ASCII.
+// CanValidate2 returns true if this rule validates the according Row.Password where Row.DirectiveA and Row.DirectiveB
+// are the indices where either of both must be the letter. This only works correctly if Row.Letter is ASCII.
 func CanValidate2(row Row) bool {
 	a := row.DirectiveA - 1
 	b := row.DirectiveB - 1

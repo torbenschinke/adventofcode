@@ -72,7 +72,7 @@ func TestCountValid(t *testing.T) {
 				t.Errorf("CountValid() got = %v, want %v", got, tt.want)
 			}
 
-			fmt.Printf("AdventOfCode/day/2/%s: valid passwords: %d\n", tt.aoc, got)
+			fmt.Printf("AdventOfCode/2020/day/2/%s: valid passwords: %d\n", tt.aoc, got)
 		})
 	}
 }
