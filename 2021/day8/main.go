@@ -5,10 +5,8 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math/bits"
 	"os"
-	"sort"
-	"strconv"
-	"strings"
 )
 
 func main() {
@@ -21,15 +19,15 @@ func main() {
 	}
 
 	fmt.Println(count(entries))
-	fmt.Println(resolve(entries)) // TODO result is fine for testinput.txt but wrong for input.txt
+	fmt.Println(resolve(entries)) //1084606
 }
 
 func resolve(entries []Entry) int {
 	sum := 0
 	for _, entry := range entries {
-		fmt.Println("->", entry.Decode())
-		sum += entry.Decode()
+		sum += entry.Display()
 	}
+
 	return sum
 }
 
@@ -39,7 +37,7 @@ func count(entries []Entry) int {
 	for _, entry := range entries {
 		for _, i := range what {
 			for _, digit := range entry.Digits {
-				if len(digit) == i {
+				if bits.OnesCount(uint(digit)) == i {
 					count++
 				}
 			}
@@ -58,12 +56,11 @@ func parse(fname string) (entries []Entry, err error) {
 	defer file.Close()
 
 	for i := 0; ; i++ {
-		var e Entry
+		var patterns [10]Pattern
+		var display [4]Pattern
 		_, err = fmt.Fscanf(file, "%s %s %s %s %s %s %s %s %s %s | %s %s %s %s\n",
-			&e.Patterns[0], &e.Patterns[1], &e.Patterns[2], &e.Patterns[3], &e.Patterns[4], &e.Patterns[5], &e.Patterns[6], &e.Patterns[7], &e.Patterns[8], &e.Patterns[9],
-			&e.Digits[0], &e.Digits[1], &e.Digits[2], &e.Digits[3])
-
-		e.Sort()
+			&patterns[0], &patterns[1], &patterns[2], &patterns[3], &patterns[4], &patterns[5], &patterns[6], &patterns[7], &patterns[8], &patterns[9],
+			&display[0], &display[1], &display[2], &display[3])
 
 		if err == io.EOF {
 			return entries, nil
@@ -73,112 +70,100 @@ func parse(fname string) (entries []Entry, err error) {
 			return nil, fmt.Errorf("cannot parse line %d: %w", i, err)
 		}
 
+		e := Entry{}
+		for i, pattern := range patterns {
+			e.Patterns[i] = pattern.Int()
+		}
+
+		for i, pattern := range display {
+			e.Digits[i] = pattern.Int()
+		}
 		entries = append(entries, e)
 	}
 }
 
 type Entry struct {
-	Patterns [10]Pattern
-	Digits   [4]Pattern
+	Patterns [10]int
+	Digits   [4]int
 }
 
-func (e *Entry) Sort() {
-	for i, pattern := range e.Patterns {
-		e.Patterns[i] = pattern.Sort()
-	}
+const (
+	A = 1 << iota
+	B
+	C
+	D
+	E
+	F
+	G
+)
 
-	for i, digit := range e.Digits {
-		e.Digits[i] = digit.Sort()
-	}
-}
+var segmentSet = []int{A, B, C, D, E, F, G}
 
-func (e Entry) Deduce() [10]Pattern {
+func (e Entry) Display() int {
 	_1 := e.pickByLen(2)[0]
 	_4 := e.pickByLen(4)[0]
 	_7 := e.pickByLen(3)[0]
 	_8 := e.pickByLen(7)[0]
 
-	_6_or_9_or_0 := e.pickByLen(6)
-	var _0_or_9 []Pattern
-	var _6 Pattern
-	for _, p := range _6_or_9_or_0 {
-		if len(_1.Minus(p)) != 0 {
-			_6 = p
+	// 3 is the only digit of in total 3 numbers with 5 segments (2,3,5)
+	var _3 int
+	for _, pattern := range e.pickByLen(5) {
+		if pattern&_1 == _1 {
+			_3 = pattern
+			break
+		}
+	}
+
+	// 9 is digit 3 | 4
+	_9 := _3 | _4
+
+	// 6 segments are either 0,6,9 but we already know 9 so same procedure as with 3
+	var _0, _6 int
+	for _, pattern := range e.pickByLen(6) {
+
+		if pattern == _9 {
+			continue
+		}
+
+		if pattern&_1 == _1 {
+			_0 = pattern
 		} else {
-			_0_or_9 = append(_0_or_9, p)
+			_6 = pattern
 		}
 	}
 
-	var _9, _0 Pattern
-	if len(_0_or_9[0].Minus(_4)) == 2 {
-		_9 = _0_or_9[0]
-		_0 = _0_or_9[1]
-	} else {
-		_9 = _0_or_9[1]
-		_0 = _0_or_9[0]
-	}
-
-	_9 = _9.Sort()
-	_0 = _0.Sort()
-
-	_a := _7.Minus(_1).Sort()
-	_c := _9.Minus(_6).Sort()
-	_f := _1.Minus(_c).Sort()
-	_g := _9.Minus(_4).Minus(_a).Sort()
-	_d := _4.Minus(_0).Sort()
-
-	_3 := _a.Plus(_c).Plus(_f).Plus(_d).Plus(_g).Sort()
-
-	var _5_or_2 []Pattern
-	for _, pattern := range e.Patterns {
-		switch pattern {
-		case _0:
-		case _1:
-		case _3:
-		case _4:
-		case _6:
-		case _7:
-		case _8:
-		case _9:
-		default:
-			_5_or_2 = append(_5_or_2, pattern)
+	// missing 2 and 5 (5 segments) => 1+5 = 9
+	var _2, _5 int
+	for _, pattern := range e.pickByLen(5) {
+		if pattern == _3 {
+			continue
+		}
+		if pattern|_1 == _9 {
+			_5 = pattern
+		} else {
+			_2 = pattern
 		}
 	}
 
-	var _5, _2 Pattern
-	if _5_or_2[0].Minus(_0).Has(_c.First()) {
-		_2 = _5_or_2[0]
-		_5 = _5_or_2[1]
-	} else {
-		_2 = _5_or_2[1]
-		_5 = _5_or_2[0]
-	}
-
-	return [10]Pattern{
-		_0.Sort(), _1.Sort(), _2.Sort(), _3.Sort(), _4.Sort(), _5.Sort(), _6.Sort(), _7.Sort(), _8.Sort(), _9.Sort(),
-	}
-}
-
-func (e Entry) Decode() int {
-	decoded := e.Deduce()
-	tmp := ""
+	nums := []int{_0, _1, _2, _3, _4, _5, _6, _7, _8, _9}
+	sum := 0
 	for _, digit := range e.Digits {
-		digit = digit.Sort()
-		for num, pattern := range decoded {
-			if pattern == digit {
-				tmp += strconv.Itoa(num)
+		sum *= 10
+		for i, num := range nums {
+			if num == digit {
+				sum += i
 			}
 		}
+
 	}
 
-	i, _ := strconv.Atoi(tmp)
-	return i
+	return sum
 }
 
-func (e Entry) pickByLen(l int) []Pattern {
-	var r []Pattern
+func (e Entry) pickByLen(l int) []int {
+	var r []int
 	for _, pattern := range e.Patterns {
-		if len(pattern) == l {
+		if bits.OnesCount(uint(pattern)) == l {
 			r = append(r, pattern)
 		}
 	}
@@ -188,53 +173,11 @@ func (e Entry) pickByLen(l int) []Pattern {
 
 type Pattern string
 
-func (p Pattern) Minus(other Pattern) Pattern {
-	var n string
-	for _, b := range p {
-		if !other.Has(byte(b)) {
-			n += string(b)
-		}
+func (p Pattern) Int() int {
+	v := 0
+	for _, i := range p {
+		v |= segmentSet[i-'a']
 	}
 
-	return Pattern(n)
-}
-
-func (p Pattern) Plus(other Pattern) Pattern {
-	n := string(p)
-	for _, b := range other {
-		if !p.Has(byte(b)) {
-			n += string(b)
-		}
-	}
-
-	return Pattern(n)
-}
-
-func (p Pattern) Has(c byte) bool {
-	for _, b := range p {
-		if byte(b) == c {
-			return true
-		}
-	}
-
-	return false
-}
-
-func (p Pattern) First() byte {
-	return p[0]
-}
-
-func (p Pattern) Sort() Pattern {
-	tmp := make([]int, 0, len(p))
-	for _, r := range p {
-		tmp = append(tmp, int(r))
-	}
-	sort.Ints(tmp)
-
-	sb := strings.Builder{}
-	for _, i := range tmp {
-		sb.WriteRune(rune(i))
-	}
-
-	return Pattern(sb.String())
+	return v
 }
