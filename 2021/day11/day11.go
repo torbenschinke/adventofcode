@@ -18,25 +18,35 @@ func main() {
 	}
 
 	fmt.Println(part1(field))
+	field, _ = readField(*path)
+	fmt.Println(part2(field))
 }
 
 func part1(field Field) int {
 	count := 0
-	print(field)
-	fmt.Println()
-
 	for i := 0; i < 100; i++ {
-		fmt.Printf("step %d\n", i+1)
 		inc(field)
 		for flash(field) {
 			count++
 		}
 		resetSaturated(field)
-		print(field)
-		fmt.Println()
 	}
 
 	return count
+}
+
+func part2(field Field) int {
+	step := 0
+
+	for {
+		step++
+		inc(field)
+		for flash(field) {
+		}
+		if clear := resetSaturated(field); clear {
+			return step
+		}
+	}
 }
 
 func flash(field Field) bool {
@@ -67,23 +77,19 @@ func inc(field Field) {
 	}
 }
 
-func print(field Field) {
-	for _, row := range field {
-		for _, val := range row {
-			fmt.Printf("%d", val)
-		}
-		fmt.Println()
-	}
-}
-
-func resetSaturated(field Field) {
+func resetSaturated(field Field) bool {
+	clear := true
 	for y, row := range field {
 		for x, val := range row {
 			if val == -1 {
 				field.Set(x, y, 0)
+			} else {
+				clear = false
 			}
 		}
 	}
+
+	return clear
 }
 
 type Pos struct {
@@ -94,7 +100,6 @@ type Field [][]int
 
 func (f Field) adjacents(x, y int) []Pos {
 	var r []Pos
-
 	for iy := max(y-1, 0); iy <= min(y+1, 9); iy++ {
 		for ix := max(x-1, 0); ix <= min(x+1, 9); ix++ {
 			if iy != y || ix != x {
