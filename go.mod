@@ -1,3 +1,3 @@
 module github.com/torbenschinke/adventofcode
 
-go 1.15
+go 1.19
