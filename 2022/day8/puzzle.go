@@ -10,6 +10,8 @@ import (
 //go:embed input.txt
 var input string
 
+var directions = []Vec{{0, -1}, {0, 1}, {1, 0}, {-1, 0}}
+
 type Tree struct {
 	Height int
 }
@@ -20,12 +22,9 @@ func (m TreeMap) Tree(x, y int) *Tree {
 	return &(m[y][x])
 }
 
-func (m TreeMap) Width() int {
-	return len(m[0])
-}
-func (m TreeMap) Height() int {
-	return len(m)
-}
+func (m TreeMap) Width() int { return len(m[0]) }
+
+func (m TreeMap) Height() int { return len(m) }
 
 func (m TreeMap) InBounds(x, y int) bool {
 	return x < m.Width() && x >= 0 && y < m.Height() && y >= 0
@@ -68,20 +67,12 @@ func Parse(input string) TreeMap {
 	return m
 }
 
-var directions = []Vec{
-	{0, -1},
-	{0, 1},
-	Vec{1, 0},
-	{-1, 0},
-}
-
 func main() {
 	trees := Parse(input)
 	outsideScore := 0
 	scenicScore := 1.0
 	trees.Each(func(x, y int, t *Tree) {
 		score := 1.0
-
 		wasVisible := false
 		for _, dir := range directions {
 			pos, hitBound := trees.Trace(x, y, t.Height, dir)
