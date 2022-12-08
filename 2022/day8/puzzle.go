@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"math"
 	"strings"
 )
 
@@ -10,8 +11,7 @@ import (
 var input string
 
 type Tree struct {
-	Height  int
-	Visible int
+	Height int
 }
 
 type TreeMap [][]Tree
@@ -31,10 +31,10 @@ func (m TreeMap) InBounds(x, y int) bool {
 	return x < m.Width() && x >= 0 && y < m.Height() && y >= 0
 }
 
-func (m TreeMap) Each(f func(t *Tree)) {
+func (m TreeMap) Each(f func(x, y int, t *Tree)) {
 	for x := 0; x < m.Width(); x++ {
 		for y := 0; y < m.Height(); y++ {
-			f(m.Tree(x, y))
+			f(x, y, m.Tree(x, y))
 		}
 	}
 }
@@ -43,27 +43,17 @@ type Vec struct {
 	X, Y int
 }
 
-func (m TreeMap) Mark(x, y int, v Vec) {
-	if !m.InBounds(x, y) {
-		return
-	}
-	tree := m.Tree(x, y)
-	if x == 0 || x == m.Width()-1 || y == 0 || y == m.Height()-1 {
-		tree.Visible++
-		x, y = x+v.X, y+v.Y
-		m.Mark(x, y, v)
-		return
-	}
+func (m TreeMap) Trace(x, y, height int, v Vec) (Vec, bool) {
 	x, y = x+v.X, y+v.Y
 	if !m.InBounds(x, y) {
-		return
+		return Vec{x - v.X, y - v.Y}, true
 	}
 	nextTree := m.Tree(x, y)
-
-	if nextTree.Height < tree.Height {
-		tree.Visible++
-		m.Mark(x, y, v)
+	if nextTree.Height >= height {
+		return Vec{x, y}, false
 	}
+
+	return m.Trace(x, y, height, v)
 }
 
 func Parse(input string) TreeMap {
@@ -78,31 +68,39 @@ func Parse(input string) TreeMap {
 	return m
 }
 
-func part1() {
-	trees := Parse(input)
-
-	// from top/bottom
-	for x := 0; x < trees.Width(); x++ {
-		trees.Mark(x, 0, Vec{0, 1})
-		trees.Mark(x, trees.Height()-1, Vec{0, -1})
-	}
-
-	// from left/right
-	for y := 0; y < trees.Height(); y++ {
-		trees.Mark(0, y, Vec{1, 0})
-		trees.Mark(trees.Width()-1, y, Vec{-1, 0})
-	}
-
-	sum := 0
-	trees.Each(func(t *Tree) {
-		if t.Visible > 0 {
-			sum++
-		}
-	})
-
-	fmt.Printf("part1: %d\n", sum)
+var directions = []Vec{
+	{0, -1},
+	{0, 1},
+	Vec{1, 0},
+	{-1, 0},
 }
 
 func main() {
-	part1()
+	trees := Parse(input)
+	outsideScore := 0
+	scenicScore := 1.0
+	trees.Each(func(x, y int, t *Tree) {
+		score := 1.0
+
+		wasVisible := false
+		for _, dir := range directions {
+			pos, hitBound := trees.Trace(x, y, t.Height, dir)
+			wasVisible = wasVisible || hitBound
+			if pos.Y == -1 || pos.X == -1 {
+				continue
+			}
+			dx, dy := math.Abs(float64(x-pos.X)), math.Abs(float64(y-pos.Y))
+			score *= dx + dy
+		}
+
+		if wasVisible {
+			outsideScore++
+		}
+		if scenicScore < score {
+			scenicScore = score
+		}
+	})
+
+	fmt.Printf("part1: %d\n", outsideScore)
+	fmt.Printf("part2: %d\n", int(scenicScore))
 }
