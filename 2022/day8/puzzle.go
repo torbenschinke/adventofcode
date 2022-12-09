@@ -77,9 +77,6 @@ func main() {
 		for _, dir := range directions {
 			pos, hitBound := trees.Trace(x, y, t.Height, dir)
 			wasVisible = wasVisible || hitBound
-			if pos.Y == -1 || pos.X == -1 {
-				continue
-			}
 			dx, dy := math.Abs(float64(x-pos.X)), math.Abs(float64(y-pos.Y))
 			score *= dx + dy
 		}
